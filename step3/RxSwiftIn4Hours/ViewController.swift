@@ -34,8 +34,38 @@ class ViewController: UIViewController {
         //          +--> button enable
         //          |
         // pw input +--> check valid --> bullet
+        
+        
+        //rx로 하면
+        idField.rx.text.orEmpty //orEmpty가 밑에 두줄과 동일함
+//            .filter { $0 != nil}
+//            .map { $0! }
+            .map(checkEmailValid)
+            .subscribe(onNext: { b in
+                self.idValidView.isHidden = b
+            })
+        .disposed(by: disposeBag)
+        
+        pwField.rx.text.orEmpty
+            .map(checkPasswordValid)
+            .subscribe(onNext: { s in
+                self.pwValidView.isHidden = s
+            })
+        .disposed(by: disposeBag)
+        
+        
+        // 가장 최근에 전달했던 값을 내려보내서 전달
+        Observable.combineLatest( //두개의 스트림을 받아서
+            idField.rx.text.orEmpty.map(checkEmailValid),
+            pwField.rx.text.orEmpty.map(checkPasswordValid),
+            resultSelector: { s1, s2 in s1 && s2 } //여기서 결정된 불린 값으로
+        ) // 밑에 줄이 실행됨
+            .subscribe(onNext: { s in
+                self.loginButton.isEnabled = s
+            })
+            .disposed(by: disposeBag)
+    
     }
-
     // MARK: - Logic
 
     private func checkEmailValid(_ email: String) -> Bool {
